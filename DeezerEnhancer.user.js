@@ -3,7 +3,7 @@
 // @namespace   github.com/fonfano
 // @match       https://www.deezer.com/fr/*
 // @grant       none
-// @version     0.4.1
+// @version     0.5
 // @author      Lt Ripley
 // @description Ajoute une image (album/artiste/avatar perso) et du texte en bas a gauche et augmente la taille de la seekbar en bas
 // ==/UserScript==
@@ -11,6 +11,7 @@
 
 
 // Historique
+//  26/02/2022  Upgrade   v 0.5   Ajout des numéros de titres dans les coups de coeur (fonction deezer qui a disparu)
 //  26/08/2021  Upgrade   v 0.4.1 Ajout texte : pseudo perso ou nom artiste dans page d'artiste
 //  25/08/2021  Upgrade   v 0.4   Ajout texte : nom artist et album
 //  22/08/2021  Upgrade   v 0.3   Ajout avatar perso dans les pages persos et avatar artiste dans les pages artistes
@@ -22,6 +23,7 @@
 // Options :
 var delay = 4000; // augmenter si problèmes (6000, 8000...) 1000 = 1seconde
 var seekbarHeight = "8px"; // taille en hauteur de la barre de progression dans le morceau
+var displayTitleNumber = true;  // ajoute le numéro des titres dans les coups de coeur
 //var seekbarHeight = "40%";   // fonctionne plus !
 //
 
@@ -38,6 +40,46 @@ var albumTextDiv = document.createElement("div" );
 
 
 
+
+function numberTheTitles() {
+
+  let titres = document.querySelectorAll(".JoTQr");
+
+  console.log('numberTheTitles est appelé')
+  
+  for (let titre of titres)  {
+    
+    let number = titre.getAttribute('aria-rowindex');
+
+    let monSpan = document.createElement("span");
+    monSpan.appendChild(document.createTextNode(number.toString()));
+
+    let maDiv = document.createElement("div");
+    maDiv.style.marginLeft="2px";
+    maDiv.setAttribute('id', 'maDivVR');
+    
+    try {
+      
+      titre.querySelector("#maDivVR").remove();
+      
+    } catch(error) {
+      
+      console.log(error);
+    }
+    
+    maDiv.appendChild(monSpan);
+
+    titre.querySelector(".ZLI1L").appendChild(maDiv);  // fonctionne pas mal !
+    
+  }
+  
+}
+
+
+
+
+
+
 window.onload = (event) => { // quand la page est chargée (mais faut quand même un timeout)
 
   console.log('window.onload passe');
@@ -49,6 +91,11 @@ window.onload = (event) => { // quand la page est chargée (mais faut quand mêm
       // Partie seekbar (barre de progression en bas dans le morceau en cours)
       seekbar = document.querySelector("#page_player > div > div.player-track > div > div.track-seekbar > div > div.slider-track");
       seekbar.style.minHeight = seekbarHeight;
+    
+      
+      if (displayTitleNumber && window.location.href.indexOf("loved") > -1 )  {
+        numberTheTitles();
+      }
 
     
   }, delay);
@@ -59,8 +106,37 @@ window.onload = (event) => { // quand la page est chargée (mais faut quand mêm
 
 
 
+// partie mutation observer pour la numerotation des titres
 
-// partie mutation observer, detecte un changement dans la page
+window.addEventListener('load', (event) => { // autre façon que window.onload ci dessus
+
+  console.log('partie mutation observer titres');
+
+  setTimeout(() => {
+
+    let elementToObserve2 = document.querySelector("#page_profile");
+    
+    let observer2 = new MutationObserver(numberTheTitles); // appel fonction
+
+    let options2 = {
+      //childList: true,
+      attributes: true,
+      //characterData: true,
+      subtree: true
+
+    };
+
+    observer2.observe(elementToObserve2, options2);
+
+  }, delay);
+
+});
+
+
+
+
+
+// partie mutation observer pour les arts (avatars...), detecte un changement dans la page
 
 window.addEventListener('load', (event) => { // autre façon que window.onload ci dessus
 
