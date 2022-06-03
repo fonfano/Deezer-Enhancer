@@ -3,7 +3,7 @@
 // @namespace   github.com/fonfano
 // @match       https://www.deezer.com/fr/*
 // @grant       none
-// @version     0.5
+// @version     0.5.1
 // @author      Lt Ripley
 // @description Ajoute une image (album/artiste/avatar perso) et du texte en bas a gauche et augmente la taille de la seekbar en bas
 // ==/UserScript==
@@ -11,21 +11,22 @@
 
 
 // Historique
-//  26/02/2022  Upgrade   v 0.5   Ajout des numéros de titres dans les coups de coeur (fonction deezer qui a disparu)
-//  26/08/2021  Upgrade   v 0.4.1 Ajout texte : pseudo perso ou nom artiste dans page d'artiste
-//  25/08/2021  Upgrade   v 0.4   Ajout texte : nom artist et album
-//  22/08/2021  Upgrade   v 0.3   Ajout avatar perso dans les pages persos et avatar artiste dans les pages artistes
-//  21/08/2021  Upgrade   v 0.2   Ajout augmentation de la taille de la seekbar en bas
-//  12/08/2021  Création  v 0.1
+//  03/06/2022  Correction  v 0.5.1 Fonctionne avec les nouveau noms d'éléments
+//  26/02/2022  Upgrade     v 0.5   Ajout des numéros de titres dans les coups de coeur (fonction deezer qui a disparu)
+//  26/08/2021  Upgrade     v 0.4.1 Ajout texte : pseudo perso ou nom artiste dans page d'artiste
+//  25/08/2021  Upgrade     v 0.4   Ajout texte : nom artist et album
+//  22/08/2021  Upgrade     v 0.3   Ajout avatar perso dans les pages persos et avatar artiste dans les pages artistes
+//  21/08/2021  Upgrade     v 0.2   Ajout augmentation de la taille de la seekbar en bas
+//  12/08/2021  Création    v 0.1
 
 
 
 // Options :
-var delay = 4000; // augmenter si problèmes (6000, 8000...) 1000 = 1seconde
+var delay = 5000; // augmenter si problèmes (6000, 8000...) 1000 = 1seconde
 var seekbarHeight = "8px"; // taille en hauteur de la barre de progression dans le morceau
 var displayTitleNumber = true;  // ajoute le numéro des titres dans les coups de coeur
-//var seekbarHeight = "40%";   // fonctionne plus !
-//
+//var seekbarHeight = "40%";   // OLD
+// fin des options
 
 
 
@@ -42,34 +43,42 @@ var albumTextDiv = document.createElement("div" );
 
 
 function numberTheTitles() {
-
-  let titres = document.querySelectorAll(".JoTQr");
-
-  console.log('numberTheTitles est appelé')
   
-  for (let titre of titres)  {
+  if (displayTitleNumber && window.location.href.indexOf("loved") > -1 )  {
+  
+    //let titres = document.querySelectorAll(".JoTQr"); // OLD
+    let titres = document.querySelectorAll("._2OACy");
     
-    let number = titre.getAttribute('aria-rowindex');
+    console.log(titres.length);
 
-    let monSpan = document.createElement("span");
-    monSpan.appendChild(document.createTextNode(number.toString()));
+    console.log('numberTheTitles est appelé')
 
-    let maDiv = document.createElement("div");
-    maDiv.style.marginLeft="2px";
-    maDiv.setAttribute('id', 'maDivVR');
-    
-    try {
-      
-      titre.querySelector("#maDivVR").remove();
-      
-    } catch(error) {
-      
-      console.log(error);
+    for (let titre of titres)  {
+
+      let number = titre.getAttribute('aria-rowindex');
+
+      let monSpan = document.createElement("span");
+      monSpan.appendChild(document.createTextNode(number.toString()));
+
+      let maDiv = document.createElement("div");
+      maDiv.style.marginLeft="2px";
+      maDiv.setAttribute('id', 'maDivVR');
+
+      try {
+
+        titre.querySelector("#maDivVR").remove();
+
+      } catch(error) {
+
+        console.log(error);
+      }
+
+      maDiv.appendChild(monSpan);
+
+      //titre.querySelector(".ZLI1L").appendChild(maDiv);  // OLD
+      titre.querySelector("._1caJL").appendChild(maDiv);
+
     }
-    
-    maDiv.appendChild(monSpan);
-
-    titre.querySelector(".ZLI1L").appendChild(maDiv);  // fonctionne pas mal !
     
   }
   
@@ -80,7 +89,7 @@ function numberTheTitles() {
 
 
 
-window.onload = (event) => { // quand la page est chargée (mais faut quand même un timeout)
+window.onload = (event) => { // quand la page est chargée (mais faut quand même un setTimeout)
 
   console.log('window.onload passe');
   
@@ -91,12 +100,10 @@ window.onload = (event) => { // quand la page est chargée (mais faut quand mêm
       // Partie seekbar (barre de progression en bas dans le morceau en cours)
       seekbar = document.querySelector("#page_player > div > div.player-track > div > div.track-seekbar > div > div.slider-track");
       seekbar.style.minHeight = seekbarHeight;
-    
       
-      if (displayTitleNumber && window.location.href.indexOf("loved") > -1 )  {
-        numberTheTitles();
-      }
-
+      // ajout du numero de titre
+      numberTheTitles();
+      
     
   }, delay);
 
@@ -116,7 +123,7 @@ window.addEventListener('load', (event) => { // autre façon que window.onload c
 
     let elementToObserve2 = document.querySelector("#page_profile");
     
-    let observer2 = new MutationObserver(numberTheTitles); // appel fonction
+    let observer2 = new MutationObserver(numberTheTitles); // déclaration avec appel fonction
 
     let options2 = {
       //childList: true,
